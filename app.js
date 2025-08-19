@@ -21,12 +21,22 @@
         return data;
     };
 
-    const loadCoins = async () => {
+    const loadCoins = async (symbolFilter = "") => {
         const url = 'https://rest.coincap.io/v3/assets?limit=100';
         const response = await getData(url, API_KEY);
-        const coins = JSON.parse(response.data).data.slice(0, 20);
+        const all = JSON.parse(response.data).data;
+
+        const filtered = symbolFilter ? all.filter(c => (c.symbol || "").toUpperCase() === symbolFilter.toUpperCase()) : all;
+
+        const coins = filtered.slice(0, 20);
+
         const container = document.getElementById('coins-container');
         container.innerHTML = "";
+
+        if (coins.length === 0) {
+            container.innerHTML = `<div class="alert alert-warning">No results for symbol "${symbolFilter}".</div>`;
+            return;
+        }
 
         coins.forEach(({ id, name, symbol }) => {
             const card = document.createElement("div");
@@ -44,36 +54,74 @@
             container.appendChild(card);
         });
     };
-    const buttons = document.getElementsByClassName('more-info-btn');
-    for (let i = 0; i < buttons.length; i++) {
-        buttons[i].addEventListener('click', function () {
+
+    const buttonsNow = document.getElementsByClassName('more-info-btn');
+    for (let i = 0; i < buttonsNow.length; i++) {
+        buttonsNow[i].onclick = function () {
             toggleMoreInfo(this.getAttribute('data-id'));
-        });
+        };
     }
 
-    const toggleMoreInfo = async (coinId) => {
-        const container = document.getElementById(`info-${coinId}`);
-        if (container.innerHTML) {
-            container.innerHTML = "";
-            return;
-        }
+    
 
-        const url = `https://rest.coincap.io/v3/assets/${coinId}`;
-        const response = await getData(url, API_KEY);
-        const coin = JSON.parse(response.data).data;
+    const buttons = document.getElementsByClassName('more-info-btn');
+for (let i = 0; i < buttons.length; i++) {
+    buttons[i].addEventListener('click', function () {
+        toggleMoreInfo(this.getAttribute('data-id'));
+    });
+}
 
-        Container.innerHTML = `
-                <img src="https://assets.coincap.io/assets/icons/${coin.symbol.toLowerCase()}@2x.png" width="50" />
-                <ul class="list-unstyled">
-                    <li>USD: $${(+coin.priceUsd).toFixed(2)}</li>
-                    <li>Change 24h: ${(+coin.changePercent24Hr).toFixed(2)}%</li>
-                </ul>
-            `;
-    };
+const toggleMoreInfo = async (coinId) => {
+    const container = document.getElementById(`info-${coinId}`);
+    if (container.innerHTML) {
+        container.innerHTML = "";
+        return;
+    }
+
+    const url = `https://rest.coincap.io/v3/assets/${coinId}`;
+    const response = await getData(url, API_KEY);
+    const coin = JSON.parse(response.data).data;
+
+    container.innerHTML = `
+        <img src="https://assets.coincap.io/assets/icons/${coin.symbol.toLowerCase()}@2x.png" width="50" />
+        <ul class="list-unstyled">
+            <li>USD: $${(+coin.priceUsd).toFixed(2)}</li>
+            <li>Change 24h: ${(+coin.changePercent24Hr).toFixed(2)}%</li>
+        </ul>
+    `;
+};  
+
 
 const pages = {
     home: () => {
-        document.getElementById("main-content").innerHTML = `<div id="coins-container" class="row gy-4"></div>`;
+        document.getElementById("main-content").innerHTML = `
+      <div class="mb-3">
+        <div class="input-group">
+          <input id="search-symbol" type="text" class="form-control" placeholder="Search by symbol (e.g. BTC)" />
+          <button id="btn-search" class="btn btn-primary">Search</button>
+          <button id="btn-clear" class="btn btn-outline-secondary">Clear</button>
+        </div>
+      </div>
+      <div id="coins-container" class="row gy-4"></div>
+    `;
+
+        const btnSearch = document.getElementById("btn-search");
+        if (btnSearch) {
+            btnSearch.onclick = function () {
+                const inp = document.getElementById("search-symbol");
+                const term = inp ? inp.value.trim() : "";
+                loadCoins(term);
+            };
+        }
+
+        const btnClear = document.getElementById("btn-clear");
+        if (btnClear) {
+            btnClear.onclick = function () {
+                const inp = document.getElementById("search-symbol");
+                if (inp) inp.value = "";
+                loadCoins("");
+            };
+        }
         loadCoins();
     },
     reports: () => {

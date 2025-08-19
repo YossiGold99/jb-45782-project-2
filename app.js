@@ -26,7 +26,9 @@
         const response = await getData(url, API_KEY);
         const all = JSON.parse(response.data).data;
 
-        const filtered = symbolFilter ? all.filter(c => (c.symbol || "").toUpperCase() === symbolFilter.toUpperCase()) : all;
+        const filtered = symbolFilter
+            ? all.filter(c => (c.symbol || "").toUpperCase() === symbolFilter.toUpperCase())
+            : all;
 
         const coins = filtered.slice(0, 20);
 
@@ -53,6 +55,13 @@
         `;
             container.appendChild(card);
         });
+
+        const buttonsNow = document.getElementsByClassName('more-info-btn');
+        for (let i = 0; i < buttonsNow.length; i++) {
+            buttonsNow[i].onclick = function () {
+                toggleMoreInfo(this.getAttribute('data-id'));
+            };
+        }
     };
 
     const buttonsNow = document.getElementsByClassName('more-info-btn');
@@ -62,39 +71,36 @@
         };
     }
 
-    
-
     const buttons = document.getElementsByClassName('more-info-btn');
-for (let i = 0; i < buttons.length; i++) {
-    buttons[i].addEventListener('click', function () {
-        toggleMoreInfo(this.getAttribute('data-id'));
-    });
-}
-
-const toggleMoreInfo = async (coinId) => {
-    const container = document.getElementById(`info-${coinId}`);
-    if (container.innerHTML) {
-        container.innerHTML = "";
-        return;
+    for (let i = 0; i < buttons.length; i++) {
+        buttons[i].addEventListener('click', function () {
+            toggleMoreInfo(this.getAttribute('data-id'));
+        });
     }
 
-    const url = `https://rest.coincap.io/v3/assets/${coinId}`;
-    const response = await getData(url, API_KEY);
-    const coin = JSON.parse(response.data).data;
+    const toggleMoreInfo = async (coinId) => {
+        const container = document.getElementById(`info-${coinId}`);
+        if (container.innerHTML) {
+            container.innerHTML = "";
+            return;
+        }
 
-    container.innerHTML = `
+        const url = `https://rest.coincap.io/v3/assets/${coinId}`;
+        const response = await getData(url, API_KEY);
+        const coin = JSON.parse(response.data).data;
+
+        container.innerHTML = `
         <img src="https://assets.coincap.io/assets/icons/${coin.symbol.toLowerCase()}@2x.png" width="50" />
         <ul class="list-unstyled">
             <li>USD: $${(+coin.priceUsd).toFixed(2)}</li>
             <li>Change 24h: ${(+coin.changePercent24Hr).toFixed(2)}%</li>
         </ul>
     `;
-};  
+    };
 
-
-const pages = {
-    home: () => {
-        document.getElementById("main-content").innerHTML = `
+    const pages = {
+        home: () => {
+            document.getElementById("main-content").innerHTML = `
       <div class="mb-3">
         <div class="input-group">
           <input id="search-symbol" type="text" class="form-control" placeholder="Search by symbol (e.g. BTC)" />
@@ -105,47 +111,49 @@ const pages = {
       <div id="coins-container" class="row gy-4"></div>
     `;
 
-        const btnSearch = document.getElementById("btn-search");
-        if (btnSearch) {
-            btnSearch.onclick = function () {
-                const inp = document.getElementById("search-symbol");
-                const term = inp ? inp.value.trim() : "";
-                loadCoins(term);
-            };
-        }
+            const btnSearch = document.getElementById("btn-search");
+            if (btnSearch) {
+                btnSearch.onclick = function () {
+                    const inp = document.getElementById("search-symbol");
+                    const term = inp ? inp.value.trim() : "";
+                    loadCoins(term);
+                };
+            }
 
-        const btnClear = document.getElementById("btn-clear");
-        if (btnClear) {
-            btnClear.onclick = function () {
-                const inp = document.getElementById("search-symbol");
-                if (inp) inp.value = "";
-                loadCoins("");
-            };
-        }
-        loadCoins();
-    },
-    reports: () => {
-        document.getElementById("main-content").innerHTML = `<h2>Reports (in progress)</h2>`;
-    },
-    about: () => {
-        document.getElementById("main-content").innerHTML = `
+            const btnClear = document.getElementById("btn-clear");
+            if (btnClear) {
+                btnClear.onclick = function () {
+                    const inp = document.getElementById("search-symbol");
+                    if (inp) inp.value = "";
+                    loadCoins("");
+                };
+            }
+
+            loadCoins();
+        },
+        reports: () => {
+            document.getElementById("main-content").innerHTML = `<h2>Reports (in progress)</h2>`;
+        },
+        about: () => {
+            document.getElementById("main-content").innerHTML = `
         <h2>About Me</h2>
         <p>This is a project by Yossi GOld</p>
         <img src="your-photo.jpg" alt="Me" class="img-thumbnail" width="200"/>
       `;
-    },
-};
+        },
+    };
 
-const loadPage = (page) => pages[page]?.();
+    const loadPage = (page) => pages[page]?.();
 
-const nav = document.getElementById("nav");
-if (nav) {
-    Nav.addEventListener("click", (e) => {
-        if (e.target && e.target.dataset && e.target.dataset.page) {
-            loadPage(e.target.dataset.page);
-        }
-    });
-}
+    const nav = document.getElementById("nav");
+    if (nav) {
+        // ✅ תיקון טייפו: Nav -> nav
+        nav.addEventListener("click", (e) => {
+            if (e.target && e.target.dataset && e.target.dataset.page) {
+                loadPage(e.target.dataset.page);
+            }
+        });
+    }
 
-loadPage("home");
-}) ();
+    loadPage("home");
+})();
